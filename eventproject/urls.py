@@ -21,5 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include("accounts.urls")),
     path ('venue/',include("venue.urls")),
-    path('booking',include('booking.urls'))
+    path('booking/',include('booking.urls'))
 ]
