@@ -1,6 +1,7 @@
 from eventproject.utils.jwt_utils import decode_jwt
 from django.http import JsonResponse
 EXEMPT_URLS = [
+    "/admin/",
     "/auth/login/",
     "/auth/register/",
     "/auth/logout/",
@@ -10,8 +11,9 @@ class JWTAuthenticationMiddleware:
     def __init__(self,get_response):
         self.get_response=get_response
     def __call__(self,request):
-        if request.path in EXEMPT_URLS:
-            return self.get_response(request)
+        for url in EXEMPT_URLS:
+            if request.path.startswith(url):
+                return self.get_response(request)
         auth=request.headers.get('Authorization')
         if not auth:
             return JsonResponse({'error':'Authorization header missing'},status=401)

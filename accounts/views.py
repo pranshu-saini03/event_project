@@ -1,23 +1,73 @@
 import json
 from django.http import JsonResponse
-from .models import user
+from .models import user, OwnerPermission
 from eventproject.utils.jwt_utils import generate_jwt
 from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def register(request):
-    if request.method!='POST':
-        return JsonResponse({'error':'Only POST method is allowed'},status=405)
-    data=json.loads(request.body)
-    username=data.get('username')
-    password=data.get('password')
-    role=data.get('role')
+
+    if request.method != 'POST':
+        return JsonResponse(
+            {'error': 'Only POST method is allowed'},
+            status=405
+        )
+
+    data = json.loads(request.body)
+
+    username = data.get('username')
+    password = data.get('password')
+    role = data.get('role')
+
+    if not username or not password or not role:
+        return JsonResponse(
+            {'error': 'username, password and role are required'},
+            status=400
+        )
+
     if user.objects.filter(username=username).exists():
-        return JsonResponse({'error':'Username already exists'},status=400)
-    user1=user.objects.create(username=username,password=password,role=role)
-    return JsonResponse({
-        "message": "User registered successfully",
-        "user_id": user1.id
-    }, status=201)
+        return JsonResponse(
+            {'error': 'Username already exists'},
+            status=400
+        )
+
+    user1 = user.objects.create(
+        username=username,
+        password=password,
+        role=role
+    )
+
+
+
+    role_permission_map = {
+        "admin": 1,
+        "user": 2,
+        "owner": 3
+    }
+
+    permission_id = role_permission_map.get(role)
+
+    if not permission_id:
+        return JsonResponse(
+            {"error": "Invalid role"},
+            status=400
+        )
+
+
+    OwnerPermission.objects.create(
+        owner_id=user1.id,
+        permission_id=permission_id
+    )
+
+    return JsonResponse(
+        {
+            "message": "User registered successfully",
+            "user_id": user1.id,
+            "role": role,
+            "permission_id": permission_id
+        },
+        status=201
+    )
+
 
 @csrf_exempt
 def login(request):
