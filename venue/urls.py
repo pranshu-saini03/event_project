@@ -1,5 +1,14 @@
 from django.urls import path
-from .views import create_venue, list_venues, add_availability,update_venue, delete_venue
+
+from .views import (
+    create_venue,
+    list_venues,
+    add_availability,
+    update_venue,
+    delete_venue,
+)
+
+
 urlpatterns = [
     path('create/', create_venue, name='create_venue'),
     path('list/', list_venues, name='list_venues'),

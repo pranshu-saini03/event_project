@@ -1,8 +1,11 @@
 import json
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import user, OwnerPermission
 from eventproject.utils.jwt_utils import generate_jwt
-from django.views.decorators.csrf import csrf_exempt
+
+
 @csrf_exempt
 def register(request):
 
@@ -36,8 +39,6 @@ def register(request):
         role=role
     )
 
-
-
     role_permission_map = {
         "admin": 1,
         "user": 2,
@@ -51,7 +52,6 @@ def register(request):
             {"error": "Invalid role"},
             status=400
         )
-
 
     OwnerPermission.objects.create(
         owner_id=user1.id,
@@ -71,28 +71,51 @@ def register(request):
 
 @csrf_exempt
 def login(request):
-    if request.method!='POST':
-        return JsonResponse({'error':'Only POST method is allowed'},status=405)
-    data=json.loads(request.body)
-    username=data.get('username')
-    password=data.get('password')
+
+    if request.method != 'POST':
+        return JsonResponse(
+            {'error': 'Only POST method is allowed'},
+            status=405
+        )
+
+    data = json.loads(request.body)
+
+    username = data.get('username')
+    password = data.get('password')
+
     try:
         user1 = user.objects.get(username=username)
+
         if user1.password != password:
-            return JsonResponse({"error": "Invalid password"}, status=401)
-    except user1.DoesNotExist:
-        return JsonResponse({"error": "Invalid credentials"}, status=401)
-    token = generate_jwt(user1.id,user1.role)
+            return JsonResponse(
+                {"error": "Invalid password"},
+                status=401
+            )
+
+    except user.DoesNotExist:
+        return JsonResponse(
+            {"error": "Invalid credentials"},
+            status=401
+        )
+
+    token = generate_jwt(user1.id, user1.role)
+
     request.session["last_login"] = user1.username
     request.session["token"] = token
-    return JsonResponse({
-        "token": token ,
-        'role': user1.role
-    })
+
+    return JsonResponse(
+        {
+            "token": token,
+            "role": user1.role
+        }
+    )
+
 
 @csrf_exempt
 def logout(request):
-    request.session.flush()
-    return JsonResponse({'message':'Logged out successfully'})
-    # Create your views here.
 
+    request.session.flush()
+
+    return JsonResponse(
+        {'message': 'Logged out successfully'}
+    )
