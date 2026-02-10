@@ -6,10 +6,24 @@ from django.db import transaction
 
 from .models import Booking
 from venue.models import venue as Venue, VenueAvailability
+from django.core.cache import cache
+
+def is_redis_working():
+    try:
+        cache.set("redis_health_check", "ok", timeout=600)
+        return cache.get("redis_health_check") == "ok"
+    except Exception:
+        return False
 
 
 @csrf_exempt
 def create_booking(request):
+    
+    if not is_redis_working():
+        return JsonResponse(
+            {'error': 'Redis is not available'},
+            status=503
+        )
 
     if request.method != 'POST':
         return JsonResponse(
